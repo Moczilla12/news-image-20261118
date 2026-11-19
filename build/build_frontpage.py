@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Render the make.fun news-image-20261118 front page (1024x1024 JPEG).
+"""Render the make.fun news-image-20261118 front page (1024x1024 JPEG), v2.
 
 Newspaper front page for Wednesday 18 November 2026: 43 verified stories.
 Three large leads with rich AI illustrations (APEC Shenzhen, Iran drones
-in the Gulf, Peltola's Alaska win), six medium stories (all six with AI
-illustrations), a world map with story dots, a
-day-in-numbers strip, and 34 briefs.
+in the Gulf, Peltola's Alaska win), ten medium stories in two rows of five
+(all ten with AI illustrations), a region bar counting all 43 stories, a
+world map with story dots, a day-in-numbers strip, and 30 briefs.
 All facts verified against reporting dated 18 Nov 2026; nothing invented.
 Output is deterministic.
 """
@@ -29,6 +29,7 @@ ORANGE = (214, 110, 24)
 BROWN = (146, 106, 38)
 TEAL = (0, 122, 122)
 GREY = (104, 104, 104)
+WORLD = (110, 90, 160)
 SEA = (206, 226, 235)
 LAND = (233, 221, 193)
 COAST = (182, 164, 120)
@@ -43,6 +44,7 @@ def font(name, size):
 F_KICK = font("DejaVuSans-Bold.ttf", 12)
 F_DATE = font("DejaVuSerif-Bold.ttf", 48)
 F_TAG = font("DejaVuSans.ttf", 11)
+F_REG = font("DejaVuSans-Bold.ttf", 9)
 F_LEAD_KICK = font("DejaVuSans-Bold.ttf", 11)
 F_LEAD_HEAD = font("DejaVuSerif-Bold.ttf", 17)
 F_LEAD_FACT = font("DejaVuSans.ttf", 11)
@@ -119,13 +121,41 @@ def load_ai(fname, w, h, focus=0.5):
 
 # ---------------------------------------------------------------- header
 d.text((28, 8), "THE WORLD'S NEWS IN ONE PICTURE", font=F_KICK, fill=RED)
-right = "43 STORIES  ·  6 CONTINENTS  ·  ALL FROM WEDNESDAY"
+right = "43 STORIES  ·  6 CONTINENTS  ·  13 ILLUSTRATED  ·  ALL FROM WEDNESDAY"
 d.text((W - 28 - d.textlength(right, font=F_KICK), 8), right, font=F_KICK, fill=INK)
 d.text((28, 26), "Wednesday 18 November 2026", font=F_DATE, fill=INK)
 d.text((28, 80), "The day in one image — every story happened on 18 November 2026",
        font=F_TAG, fill=GREY)
 hline(28, W - 28, 96, 2)
 hline(28, W - 28, 100, 1)
+
+# ---------------------------------------------------------------- region bar
+# Story counts per region, counted from the 43 stories below:
+# Americas 9, Africa 8, Asia 7, Europe 6, Middle East 6, World 6, Oceania 1.
+REGIONS = [
+    ("Americas", 9, RED),
+    ("Africa", 8, BROWN),
+    ("Asia", 7, GREEN),
+    ("Europe", 6, BLUE),
+    ("Mideast", 6, ORANGE),
+    ("World", 6, WORLD),
+    ("Oceania", 1, TEAL),
+]
+assert sum(c for _, c, _ in REGIONS) == 43, "region counts must sum to 43"
+BAR_X0, BAR_X1, BAR_Y, BAR_H = 28, W - 28, 106, 18
+bar_w = BAR_X1 - BAR_X0
+x = BAR_X0
+for name, count, col in REGIONS:
+    seg = int(round(bar_w * count / 43))
+    if x + seg > BAR_X1:
+        seg = BAR_X1 - x
+    d.rectangle([x, BAR_Y, x + seg - 1, BAR_Y + BAR_H - 1], fill=col)
+    label = f"{name} {count}"
+    tw = d.textlength(label, font=F_REG)
+    if tw <= seg - 6:
+        d.text((x + (seg - tw) / 2, BAR_Y + 4), label, font=F_REG,
+               fill=(255, 255, 255))
+    x += seg
 
 # ---------------------------------------------------------------- top row: 3 large leads
 LEADS = [
@@ -149,23 +179,25 @@ LEADS = [
               "ninth midterm flip."),
 ]
 LEAD_W = 312
+LEAD_Y = 132
+LEAD_IMG_H = 140
 for i, s in enumerate(LEADS):
     x = 28 + i * (LEAD_W + 8)
-    y = 108
-    im_ai = load_ai(s["fname"], LEAD_W, 160, focus=s["focus"])
+    y = LEAD_Y
+    im_ai = load_ai(s["fname"], LEAD_W, LEAD_IMG_H, focus=s["focus"])
     img.paste(im_ai, (x, y))
-    d.rectangle([x, y, x + LEAD_W - 1, y + 159], outline=(150, 150, 150))
+    d.rectangle([x, y, x + LEAD_W - 1, y + LEAD_IMG_H - 1], outline=(150, 150, 150))
     num_badge(x + 13, y + 13, 10, s["n"], fill=s["col"])
-    ky = y + 168
+    ky = y + LEAD_IMG_H + 8
     d.text((x, ky), s["kick"], font=F_LEAD_KICK, fill=s["col"])
     hy = ky + 16
     hl = wrap(s["head"], F_LEAD_HEAD, LEAD_W)
     hy = text_block(x, hy, hl[:2], F_LEAD_HEAD, leading=20)
     fl = wrap(s["fact"], F_LEAD_FACT, LEAD_W)
     text_block(x, hy + 3, fl[:3], F_LEAD_FACT, fill=(70, 70, 70), leading=14)
-hline(28, W - 28, 372, 1)
+hline(28, W - 28, 388, 1)
 
-# ---------------------------------------------------------------- row: 6 medium stories
+# ---------------------------------------------------------------- rows: 10 medium stories (2 rows x 5)
 MEDS = [
     dict(n=4, kick="EUROPE  ·  UKRAINE", col=BLUE, ai="kerch",
          head="Kerch Bridge span in the sea",
@@ -185,6 +217,18 @@ MEDS = [
     dict(n=9, kick="MIDDLE EAST  ·  GAZA", col=RED, ai="gaza",
          head="Board faults Israel and Hamas",
          fact="Peace board says truce at risk; 1.4m face acute hunger."),
+    dict(n=10, kick="WORLD  ·  SPACE", col=WORLD, ai="voyager",
+         head="Voyager 1 reaches one light-day from Earth",
+         fact="25.9bn km at 10:16 UTC — first object that far; signal takes 24h."),
+    dict(n=11, kick="EUROPE  ·  UKRAINE WAR", col=BLUE, ai="russia-drones",
+         head="Russia fires 141 drones at Ukraine; 126 downed",
+         fact="Hits at seven sites; 4 killed in Donetsk, 5 dead, 15 hurt."),
+    dict(n=12, kick="ASIA  ·  LABOUR", col=GREEN, ai="bangladesh",
+         head="Bangladesh wage protests shut ~535 factories",
+         fact="~300 arrested; 20,000 workers blocked the Dhaka–Aricha highway."),
+    dict(n=13, kick="EUROPE  ·  ECONOMY", col=BLUE, ai="uk-inflation",
+         head="UK inflation climbs to 3.6%, a one-year high",
+         fact="CPI up from 3.5% in September; motor fuel +33.2% year on year."),
 ]
 
 # AI illustrations for medium stories: filename + vertical focus (0=top, 1=bottom).
@@ -195,30 +239,39 @@ AI_MED = {
     "nvidia": ("media-generation-nvidia-chip-0-2642ac14-7763-4ec7-986a-fa57b459742c.webp", 0.75),
     "knesset": ("media-generation-knesset-gaza-0-08787f5a-8976-4c31-b177-139bde160522.webp", 0.3),
     "gaza": ("media-generation-gaza-aid-0-a34c1b88-3103-4328-91de-e1e83174d033.webp", 0.5),
+    "voyager": ("media-generation-voyager-1-0-49edb854-a1ba-4b0e-b0fa-05f321a6e184.webp", 0.5),
+    "russia-drones": ("media-generation-russia-drones-0-cca0fce2-b38a-4e28-9131-cc74fc34234c.webp", 0.5),
+    "bangladesh": ("media-generation-bangladesh-garment-0-67c0545f-ea96-43ed-b5c0-cd161c456cfc.webp", 0.5),
+    "uk-inflation": ("media-generation-uk-inflation-0-b7724f1a-9818-4d4d-99ef-f49ac6d35848.webp", 0.5),
 }
 
-MED_W = 154
-MED_Y = 380
+MED_W = 187
+MED_IMG_H = 70
+MED_Y1 = 396
+ROW_H = 150
 for i, s in enumerate(MEDS):
-    x = 28 + i * (MED_W + 8)
+    row = i // 5
+    col = i % 5
+    x = 28 + col * (MED_W + 8)
+    y = MED_Y1 + row * ROW_H
     fname, focus = AI_MED[s["ai"]]
-    im_ai = load_ai(fname, MED_W, 76, focus=focus)
-    img.paste(im_ai, (x, MED_Y))
-    d.rectangle([x, MED_Y, x + MED_W - 1, MED_Y + 75], outline=(150, 150, 150))
-    num_badge(x + 11, MED_Y + 11, 9, s["n"], fill=s["col"])
-    ky = MED_Y + 82
+    im_ai = load_ai(fname, MED_W, MED_IMG_H, focus=focus)
+    img.paste(im_ai, (x, y))
+    d.rectangle([x, y, x + MED_W - 1, y + MED_IMG_H - 1], outline=(150, 150, 150))
+    num_badge(x + 11, y + 11, 9, s["n"], fill=s["col"])
+    ky = y + MED_IMG_H + 6
     d.text((x, ky), s["kick"], font=F_MED_KICK, fill=s["col"])
     hy = ky + 13
     hl = wrap(s["head"], F_MED_HEAD, MED_W)
     hy = text_block(x, hy, hl[:2], F_MED_HEAD, leading=15)
     fl = wrap(s["fact"], F_MED_FACT, MED_W)
     text_block(x, hy + 1, fl[:2], F_MED_FACT, fill=(70, 70, 70), leading=12)
-hline(28, W - 28, 542, 1)
+hline(28, W - 28, 696, 1)
 
 # ---------------------------------------------------------------- bottom: map + numbers + briefs
-d.text((28, 550), "WHERE IT HAPPENED", font=F_SEC, fill=INK)
-d.text((524, 550), "ALSO ON 18 NOVEMBER", font=F_SEC, fill=INK)
-MAP = (28, 570, 498, 810)
+d.text((28, 704), "WHERE IT HAPPENED", font=F_SEC, fill=INK)
+d.text((524, 704), "ALSO ON 18 NOVEMBER", font=F_SEC, fill=INK)
+MAP = (28, 722, 498, 882)
 d.rectangle(MAP, fill=SEA, outline=(170, 180, 170))
 
 geo = json.load(open(GEO))
@@ -252,16 +305,19 @@ for feat in geo["features"]:
                 draw_poly(ring, MAP)
 
 REG = {"americas": RED, "europe": BLUE, "mideast": ORANGE,
-       "asia": GREEN, "africa": BROWN, "oceania": TEAL}
+       "asia": GREEN, "africa": BROWN, "oceania": TEAL, "world": WORLD}
 NUMBERED = [
     (1, 113.8, 22.5, "asia"), (2, 47.5, 29.3, "mideast"),
     (3, -150.0, 64.0, "americas"), (4, 36.5, 45.3, "europe"),
     (5, -162.0, -13.0, "oceania"), (6, 23.0, -3.0, "africa"),
     (7, -122.0, 37.4, "americas"), (8, 35.2, 31.8, "mideast"),
-    (9, 34.5, 31.5, "mideast"),
+    (9, 34.5, 31.5, "mideast"), (10, -120.0, -40.0, "world"),
+    (11, 31.0, 49.0, "europe"), (12, 90.4, 23.8, "asia"),
+    (13, -0.1, 51.5, "europe"),
 ]
-OFFSETS = {2: (16, -12), 8: (-16, 10), 9: (14, 12), 1: (14, 10),
-           3: (14, -12), 7: (-14, 10), 4: (-14, -12)}
+OFFSETS = {2: (26, 6), 8: (-8, 14), 9: (14, 22), 1: (14, 10),
+           3: (14, -12), 7: (-14, 10), 4: (24, -8), 11: (-24, 10),
+           12: (-14, 12), 13: (-24, -16)}
 for n, lon, lat, reg in NUMBERED:
     x, y = project(lon, lat, MAP)
     dx, dy = OFFSETS.get(n, (0, 0))
@@ -271,7 +327,7 @@ for n, lon, lat, reg in NUMBERED:
         x, y = x + dx, y + dy
     num_badge(x, y, 8, n, fill=REG[reg])
 BRIEF_DOTS = [
-    (-97.0, 38.0, "americas"), (30.7, 36.9, "europe"), (80.5, 15.5, "asia"),
+    (-97.0, 38.0, "americas"), (80.5, 15.5, "asia"),
     (4.35, 50.85, "europe"), (44.2, 15.35, "mideast"), (45.0, 24.0, "mideast"),
     (-122.4, 37.8, "americas"), (8.5, 47.4, "europe"), (36.8, -1.3, "africa"),
     (32.5, 15.6, "africa"), (39.0, 14.5, "africa"), (3.4, 6.5, "africa"),
@@ -281,18 +337,17 @@ BRIEF_DOTS = [
     (-74.0, 40.7, "americas"), (34.8, 31.3, "mideast"), (4.7, 50.6, "europe"),
     (28.0, -26.2, "africa"), (-23.5, 15.1, "africa"), (31.6, 4.85, "africa"),
     (-46.6, -23.5, "americas"), (-52.0, -10.0, "americas"),
-    (-121.0, 37.0, "americas"), (-122.0, 37.0, "americas"),
-    (-76.0, 39.0, "americas"), (-2.2, 53.5, "europe"), (-93.3, 45.0, "americas"),
+    (-121.0, 37.0, "americas"), (-76.0, 39.0, "americas"),
 ]
 for lon, lat, reg in BRIEF_DOTS:
     x, y = project(lon, lat, MAP)
     d.ellipse([x - 3, y - 3, x + 3, y + 3], fill=REG[reg], outline=(255, 255, 255))
 
-d.text((28, 816), "Numbers 1–9 are the big stories; dots are the briefs.",
+d.text((28, 886), "Numbers 1–13 are the big stories; dots are the briefs.",
        font=F_TAG, fill=GREY)
 
 # day in numbers (left column, under the map)
-d.text((28, 834), "THE DAY IN NUMBERS", font=F_SEC, fill=INK)
+d.text((28, 902), "THE DAY IN NUMBERS", font=F_SEC, fill=INK)
 STATS = [
     ("56–44", "Democrats' Senate majority", RED),
     ("220 km/h", "Cyclone Xavier's top winds", TEAL),
@@ -301,57 +356,53 @@ STATS = [
 ]
 for i, (num, lab, col) in enumerate(STATS):
     x = 28 + i * (113 + 6)
-    y = 850
-    d.rectangle([x, y, x + 113, y + 88], fill=(238, 234, 222),
+    y = 918
+    d.rectangle([x, y, x + 113, y + 70], fill=(238, 234, 222),
                 outline=(200, 192, 170))
     d.rectangle([x, y, x + 113, y + 3], fill=col)
     nw = d.textlength(num, font=F_NUM)
-    d.text((x + (113 - nw) / 2, y + 12), num, font=F_NUM, fill=col)
+    d.text((x + (113 - nw) / 2, y + 10), num, font=F_NUM, fill=col)
     ll = wrap(lab, F_NUM_LAB, 100)
-    text_block(x + 7, y + 36, ll[:3], F_NUM_LAB, fill=(70, 70, 70), leading=11)
+    text_block(x + 7, y + 34, ll[:2], F_NUM_LAB, fill=(70, 70, 70), leading=11)
 
-# briefs list (right side, two columns of 17; numbers 10–43)
+# briefs list (right side, two columns of 15; numbers 14–43)
 BRIEFS = [
-    (10, "US loses measles-free status"),
-    (11, "COP31 draft backs oceans"),
-    (12, "Cyclone Akvan nears Andhra coast"),
-    (13, "Eurozone inflation hits 4.0%"),
-    (14, "Saudi coalition hits 60 Houthi targets"),
-    (15, "Houthis claim drones hit Saudi pipeline"),
-    (16, "OpenAI launches GPT-6.2 Astra and Sol"),
-    (17, "FIFA rankings: Spain stays No. 1"),
-    (18, "Six teams book AFCON 2027 spots"),
-    (19, "UN counts 2,230 Sudan civilian deaths"),
-    (20, "Ethiopia, Eritrea mass troops"),
-    (21, "Nigeria busts Europe-bound cocaine gang"),
-    (22, "2,500 dead or missing on sea routes"),
-    (23, "World Court to rule on Myanmar case"),
-    (24, "Myanmar junta to review ASEAN ties"),
-    (25, "South Korea's Lee courts Beijing"),
-    (26, "Trump meets Marcos in Manila"),
-    (27, "Putin 'not ready' for Ukraine talks"),
-    (28, "US officer held over alleged spying"),
-    (29, "Oil falls on US stock build"),
-    (30, "Fed minutes hawkish; December hike likely"),
-    (31, "US housing starts up 9.9%"),
-    (32, "Gaza winter floods tents; 1.4m hungry"),
-    (33, "NATO unveils new comms strategy"),
-    (34, "SA mercenary accused in court"),
-    (35, "Cabo Verde vote peaceful, ECOWAS says"),
-    (36, "Machar testifies; South Sudan votes 22 Dec"),
-    (37, "Latin America steel imports up 47%"),
-    (38, "Brazil wind slows; Mexico plans 6.9 GW"),
-    (39, "OpenAI models found Nginx code flaws"),
-    (40, "No AI model meets employee bar"),
-    (41, "Trump takes dirty-bomb report seriously"),
-    (42, "Pochettino quits USMNT for Man United"),
-    (43, "Target, Lowe's, Palo Alto report results"),
+    (14, "US loses measles-free status"),
+    (15, "Cyclone Akvan nears Andhra coast"),
+    (16, "Eurozone inflation hits 4.0%"),
+    (17, "Saudi coalition hits 60 Houthi targets"),
+    (18, "Houthis claim drones hit Saudi pipeline"),
+    (19, "OpenAI launches GPT-6.2 Astra and Sol"),
+    (20, "FIFA rankings: Spain stays No. 1"),
+    (21, "Six teams book AFCON 2027 spots"),
+    (22, "UN counts 2,230 Sudan civilian deaths"),
+    (23, "Ethiopia, Eritrea mass troops"),
+    (24, "Nigeria busts Europe-bound cocaine gang"),
+    (25, "2,500 dead or missing on sea routes"),
+    (26, "World Court to rule on Myanmar case"),
+    (27, "Myanmar junta to review ASEAN ties"),
+    (28, "South Korea's Lee courts Beijing"),
+    (29, "Trump meets Marcos in Manila"),
+    (30, "Putin 'not ready' for Ukraine talks"),
+    (31, "US officer held over alleged spying"),
+    (32, "Oil falls on US stock build"),
+    (33, "Fed minutes hawkish; December hike likely"),
+    (34, "US housing starts up 9.9%"),
+    (35, "Gaza winter floods tents; 1.4m hungry"),
+    (36, "NATO unveils new comms strategy"),
+    (37, "SA mercenary accused in court"),
+    (38, "Cabo Verde vote peaceful, ECOWAS says"),
+    (39, "Machar testifies; South Sudan votes 22 Dec"),
+    (40, "Latin America steel imports up 47%"),
+    (41, "Brazil wind slows; Mexico plans 6.9 GW"),
+    (42, "OpenAI models found Nginx code flaws"),
+    (43, "Trump takes dirty-bomb report seriously"),
 ]
 for i, (n, txt) in enumerate(BRIEFS):
-    col = i // 17
-    row = i % 17
+    col = i // 15
+    row = i % 15
     x = 524 + col * 236
-    y = 570 + row * 24
+    y = 722 + row * 17
     num_badge(x + 7, y + 6, 7, n, fill=GREEN)
     d.text((x + 19, y), txt, font=F_BRIEF, fill=INK)
 
