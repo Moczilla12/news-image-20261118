@@ -162,11 +162,11 @@ hline(28, W - 28, 100, 1)
 
 # ---------------------------------------------------------------- region bar
 # Story counts per region, counted from the 44 stories below:
-# Americas 11, Africa 9, Asia 6, Europe 7, Mideast 5, World 5, Oceania 1.
+# Americas 10, Africa 9, Asia 7, Europe 7, Mideast 5, World 5, Oceania 1.
 REGIONS = [
-    ("Americas", 11, RED),
+    ("Americas", 10, RED),
     ("Africa", 9, BROWN),
-    ("Asia", 6, GREEN),
+    ("Asia", 7, GREEN),
     ("Europe", 7, BLUE),
     ("Mideast", 5, ORANGE),
     ("World", 5, WORLD),
@@ -312,10 +312,10 @@ MEDS = [
          ai="ebola",
          head="Ebola passes 11,300 cases; emergency stays",
          fact="11,376 cases, 5,568 deaths; 400–500 new cases a week."),
-    dict(n=16, kick="US  ·  CULTURE", col=ORANGE, tag="CONFIRMED",
-         ai="van-gogh",
-         head="Van Gogh sale sets artist record: $190.4m",
-         fact="Sotheby's New York; artist record, prev $117.2m in 2022."),
+    dict(n=16, kick="ASIA  ·  LABOUR", col=GREEN, tag="CONFIRMED",
+         ai="bangladesh",
+         head="Bangladesh wage protests shut ~535 factories",
+         fact="~300 arrested; 20,000 blocked the Dhaka–Aricha highway."),
 ]
 
 # AI illustrations for medium stories: filename + vertical focus (0=top, 1=bottom).
@@ -331,6 +331,7 @@ AI_MED = {
     "uk-inflation": ("media-generation-uk-inflation-0-b7724f1a-9818-4d4d-99ef-f49ac6d35848.webp", 0.5),
     "cop31": ("media-generation-media-generation-cop31-v3-0-517c7fc4-6689-4673-ae04-e78e98dcdb7e.webp", 0.5),
     "ebola": ("media-generation-ebola-congo-0-799a6ff4-2c95-407a-9ef4-633d8572dbc5.webp", 0.5),
+    "bangladesh": ("media-generation-bangladesh-garment-0-67c0545f-ea96-43ed-b5c0-cd161c456cfc.webp", 0.5),
     "van-gogh": ("media-generation-media-generation-van-gogh-v3-0-7e2e9581-1efb-4eeb-ba23-39389a463fd7.webp", 0.5),
 }
 
@@ -405,12 +406,12 @@ NUMBERED = [
     (10, 172.6, -41.8, "oceania"), (11, 34.4, 31.4, "mideast"),
     (12, -74.0, 40.7, "americas"), (13, -0.1, 51.5, "europe"),
     (14, 30.7, 36.9, "world"), (15, 23.0, -3.0, "africa"),
-    (16, -74.0, 40.7, "americas"),
+    (16, 90.4, 23.8, "asia"),
 ]
 OFFSETS = {2: (26, 6), 11: (14, 18), 1: (14, 10), 9: (18, 14),
-           3: (-20, -10), 13: (-24, -14), 5: (20, -8), 7: (-14, 12),
+           3: (-20, -10), 13: (-24, -14), 5: (20, -8), 7: (-16, 14),
            8: (16, 8), 10: (-24, -8), 14: (18, 10), 15: (14, 12),
-           16: (-20, 12)}
+           16: (20, -12)}
 for n, lon, lat, reg in NUMBERED:
     x, y = project(lon, lat, MAP)
     dx, dy = OFFSETS.get(n, (0, 0))
@@ -486,18 +487,18 @@ for i, (n, txt) in enumerate(BRIEFS):
 # ---------------------------------------------------------------- BY FIELD bar
 # Field counts, counted from the 44 stories:
 # War & security 10, Economy & markets 7, Politics & courts 7, Diplomacy 5,
-# Culture & sport 4, Climate & disasters 4, Science & health 3,
-# Business & tech 2, Labour & society 2.
+# Culture & sport 3, Climate & disasters 4, Science & health 3,
+# Business & tech 2, Labour & society 3.
 FIELDS = [
     ("War & security", 10, RED),
     ("Economy & markets", 7, BROWN),
     ("Politics & courts", 7, ORANGE),
     ("Diplomacy", 5, BLUE),
-    ("Culture & sport", 4, WORLD),
+    ("Culture & sport", 3, WORLD),
     ("Climate", 4, STEEL),
     ("Science", 3, PLUM),
     ("Biz", 2, TEAL),
-    ("Labour", 2, GREEN),
+    ("Labour", 3, GREEN),
 ]
 assert sum(c for _, c, _ in FIELDS) == 44, "field counts must sum to 44"
 FBAR_X0, FBAR_X1, FBAR_Y, FBAR_H = 28, W - 28, 900, 16
