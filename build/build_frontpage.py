@@ -3,8 +3,8 @@
 
 Newspaper front page for Wednesday 18 November 2026: 43 verified stories.
 Three large leads with rich AI illustrations (APEC Shenzhen, Iran drones
-in the Gulf, Peltola's Alaska win), six medium stories (five AI
-illustrations, one drawn aid-tent scene), a world map with story dots, a
+in the Gulf, Peltola's Alaska win), six medium stories (all six with AI
+illustrations), a world map with story dots, a
 day-in-numbers strip, and 34 briefs.
 All facts verified against reporting dated 18 Nov 2026; nothing invented.
 Output is deterministic.
@@ -165,20 +165,6 @@ for i, s in enumerate(LEADS):
     text_block(x, hy + 3, fl[:3], F_LEAD_FACT, fill=(70, 70, 70), leading=14)
 hline(28, W - 28, 372, 1)
 
-# ---------------------------------------------------------------- PIL art for the Gaza medium (aid tents)
-def art_tents(x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(238, 226, 200))
-    d.rectangle([x, y + h - 14, x + w, y + h], fill=(190, 170, 120))
-    for tx, tw, col in [(x + 8, 46, (245, 245, 240)),
-                        (x + 56, 54, (225, 225, 215)),
-                        (x + 110, 40, (245, 245, 240))]:
-        d.polygon([(tx, y + h - 14), (tx + tw // 2, y + 12),
-                   (tx + tw, y + h - 14)], fill=col, outline=(120, 110, 90))
-        d.line([tx + tw // 2, y + 12, tx + tw // 2, y + h - 14],
-               fill=(160, 150, 120), width=1)
-        d.polygon([(tx + tw // 2 - 4, y + h - 14), (tx + tw // 2 + 4, y + h - 14),
-                   (tx + tw // 2, y + h - 24)], fill=(90, 90, 90))
-
 # ---------------------------------------------------------------- row: 6 medium stories
 MEDS = [
     dict(n=4, kick="EUROPE  ·  UKRAINE", col=BLUE, ai="kerch",
@@ -196,7 +182,7 @@ MEDS = [
     dict(n=8, kick="ISRAEL  ·  POLITICS", col=ORANGE, ai="knesset",
          head="Kahana wins Knesset 66–52",
          fact="66–52 speaker vote; a blow to Netanyahu."),
-    dict(n=9, kick="MIDDLE EAST  ·  GAZA", col=RED, art="tents",
+    dict(n=9, kick="MIDDLE EAST  ·  GAZA", col=RED, ai="gaza",
          head="Board faults Israel and Hamas",
          fact="Peace board says truce at risk; 1.4m face acute hunger."),
 ]
@@ -208,18 +194,16 @@ AI_MED = {
     "ebola": ("media-generation-ebola-congo-0-799a6ff4-2c95-407a-9ef4-633d8572dbc5.webp", 0.5),
     "nvidia": ("media-generation-nvidia-chip-0-2642ac14-7763-4ec7-986a-fa57b459742c.webp", 0.75),
     "knesset": ("media-generation-knesset-gaza-0-08787f5a-8976-4c31-b177-139bde160522.webp", 0.3),
+    "gaza": ("media-generation-gaza-aid-0-a34c1b88-3103-4328-91de-e1e83174d033.webp", 0.5),
 }
 
 MED_W = 154
 MED_Y = 380
 for i, s in enumerate(MEDS):
     x = 28 + i * (MED_W + 8)
-    if s.get("ai"):
-        fname, focus = AI_MED[s["ai"]]
-        im_ai = load_ai(fname, MED_W, 76, focus=focus)
-        img.paste(im_ai, (x, MED_Y))
-    else:
-        art_tents(x, MED_Y, MED_W, 76)
+    fname, focus = AI_MED[s["ai"]]
+    im_ai = load_ai(fname, MED_W, 76, focus=focus)
+    img.paste(im_ai, (x, MED_Y))
     d.rectangle([x, MED_Y, x + MED_W - 1, MED_Y + 75], outline=(150, 150, 150))
     num_badge(x + 11, MED_Y + 11, 9, s["n"], fill=s["col"])
     ky = MED_Y + 82
